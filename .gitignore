@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# 大文件：模型权重 / 数据集 / 训练产物
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+checkpoints/
+data/raw/
+outputs/
+wandb/
+
+# 系统
+.DS_Store
