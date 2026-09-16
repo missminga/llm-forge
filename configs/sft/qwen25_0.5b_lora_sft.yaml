@@ -1,5 +1,5 @@
 # SFT 实验 001：Qwen2.5-0.5B-Instruct + LoRA
-# 数据：LLaMA-Factory 内置开源数据集（identity 本地文件 + alpaca 中文/英文 demo，
+# 数据：LLaMA-Factory 数据集定义（identity 为仓库本地文件；alpaca_zh / alpaca_en
 #       训练时自动从 HuggingFace 下载，远程机器走 HF_ENDPOINT=https://hf-mirror.com）
 # 运行（在远程项目根目录 /aicc/userData/menghan/code/llm-forge 下）：
 #   HF_ENDPOINT=https://hf-mirror.com .venv/bin/llamafactory-cli train configs/sft/qwen25_0.5b_lora_sft.yaml
@@ -18,7 +18,7 @@ lora_target: all
 
 ### dataset
 dataset_dir: third_party/LLaMA-Factory/data   # 复用 LLaMA-Factory 自带数据集定义
-dataset: identity,alpaca_zh_demo,alpaca_en_demo
+dataset: identity,alpaca_zh,alpaca_en
 template: qwen
 cutoff_len: 1024
 max_samples: 3000

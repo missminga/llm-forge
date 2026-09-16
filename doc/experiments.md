@@ -8,8 +8,8 @@
   产物保存整条链路。
 - **环境**：RTX 4090 24GB；远程 `.venv`（uv，CPython 3.12），llamafactory[torch,metrics]。
 - **模型**：Qwen/Qwen2.5-0.5B-Instruct（经 hf-mirror 下载到 `models/`）。
-- **数据**：LLaMA-Factory 内置 `identity` + `alpaca_zh_demo` + `alpaca_en_demo`
-  （后两者训练时从 HuggingFace 自动下载，`HF_ENDPOINT=https://hf-mirror.com`），
+- **数据**：`identity`（LLaMA-Factory 仓库本地文件）+ `alpaca_zh` / `alpaca_en`
+  （训练时从 HuggingFace 自动下载，`HF_ENDPOINT=https://hf-mirror.com`），
   `max_samples=3000`，`cutoff_len=1024`。
 - **方法**：LoRA（rank=8, alpha=16, target=all），3 epochs，lr=1e-4 cosine，
   bs=4×grad_accum 4，bf16。
