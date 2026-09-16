@@ -1,0 +1,31 @@
+# CUDA 训练机器连接配置 —— 填写模板
+#
+# 用法：cp configs/cuda-machine.example.yaml configs/cuda-machine.local.yaml
+# 然后填写真实值。*.local.yaml 已被 .gitignore 排除，不会入库。
+# 尖括号 <...> 为必填占位符，填完删掉。
+
+# 最近核对日期（改完顺手更新）
+last_verified: <YYYY-MM-DD>
+
+machine:
+  gpu: <GPU 型号，如 NVIDIA RTX 4090 24GB>   # 训练传 device='cuda'
+
+ssh:
+  key: <~/.ssh/私钥文件名>
+  user: <远程用户名>
+  jump_host: <第一跳跳板机 IP>        # 最常变
+  jump_port: <跳板机 SSH 端口>
+  forward_target: <GPU pod sshd 地址 host:port>
+  local_port: <本机转发端口>
+  reverse_remote_port: <反向隧道远程端口，无需求可留空>
+  local_db_port: <反向隧道本地端口，无需求可留空>
+
+paths:
+  remote_project_dir: <GPU 机上本项目目录>        # 首次使用需创建并构建 .venv
+  renewforecast_dir: <GPU 机上 RenewForecast 目录> # 与本项目分开，不要混用
+  helper_script: <gpu_tunnels.sh 相对路径>         # show/firsthop/reverse/setup-remote/verify/exec
+
+git:
+  # 例：ssh://<user>@127.0.0.1:<local_port><remote_project_dir>
+  # 配合 GIT_SSH_COMMAND="ssh -i <ssh.key>" 使用
+  cudabox_remote: <GPU 机上的 git remote 地址>
