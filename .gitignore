@@ -18,5 +18,8 @@ data/raw/
 outputs/
 wandb/
 
+# 本机私有文件：内网连接信息等（如 doc/cuda-machine.local.md）
+*.local.md
+
 # 系统
 .DS_Store
