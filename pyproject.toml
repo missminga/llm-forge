@@ -1,0 +1,12 @@
+[project]
+name = "llm-forge"
+version = "0.1.0"
+description = "LLM 全流程练手：SFT → DPO/RLHF → 部署上线"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "llamafactory[torch,metrics]",
+]
+
+[dependency-groups]
+dev = []

@@ -17,6 +17,9 @@ checkpoints/
 data/raw/
 outputs/
 wandb/
+third_party/
+models/
+.cache/
 
 # 本机私有文件：内网连接信息等（如 configs/cuda-machine.local.yaml）
 *.local.*
