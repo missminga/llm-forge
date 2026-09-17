@@ -37,5 +37,18 @@
 - **方法**：LoRA DPO（rank=8, target=all），beta=0.1，sigmoid loss，lr=5e-6
   （比 SFT 低一个量级），bs=2×grad_accum 8，bf16。
 - **配置**：`configs/dpo/qwen25_0.5b_lora_dpo.yaml`
-- **结果**：（训练完成后回填：rewards/accuracies、loss、耗时）
-- **结论**：（待填，含 基座/SFT/SFT+DPO 三方对比 `scripts/predict_compare.py`）
+- **结果**：
+  - 训练 188 步 / 1 epoch，耗时 8:38，吞吐 5.8 samples/s，峰值显存约 13.9GB。
+  - train_loss 0.668（从 ln2≈0.693 下降）；**rewards/accuracies 0.45→0.72**（偏好对
+    排序准确率持续上升）；rewards/margins 0→~0.10，chosen 奖励上行、rejected 持平。
+  - 三方对比（`scripts/predict_compare.py`）：
+    - 基座回答冗长易跑题（AI 一题直接顶到 256 token 截断；春天诗还拼贴了
+      "人间四月芳菲尽"等古诗成句）；
+    - SFT 后回答明显收敛、简洁切题；
+    - SFT+DPO 与 SFT 风格接近但更完整、更"周全"（AI 一题在不超长的前提下覆盖了
+      定义+原理+应用；情绪建议增加了"做喜欢的活动"等更具体的共情式表达）。
+- **结论**：DPO 闭环跑通（合并 SFT → 偏好对训练 → 三方对比）。0.5B + 3000 对 +
+  1 epoch 的规模下定性差异比较微妙，但 rewards 指标证明偏好确实被学到了。
+- **后续**：想要更明显的对齐效果，可以：加大偏好数据量（去掉 max_samples 上限）、
+  多训 1~2 个 epoch 观察 rewards/accuracies 是否继续上行（同时警惕过长训练导致
+  回答退化）、或换 ultrafeedback/coig_p 等数据集对比偏好来源的影响。
