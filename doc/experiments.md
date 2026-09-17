@@ -26,3 +26,16 @@
 - **后续**：identity.json 的 `{{name}}/{{author}}` 占位符未被替换，下次实验前在数据侧
   改成自定义名称再训；可加大 `max_samples` 或换更大数据集（belle/firefly 等已在
   dataset_info.json 里接好 HF 源）观察效果差异。
+
+## 002 DPO：SFT 模型 + LoRA DPO（2026-09-17）
+
+- **目的**：在 SFT 基础上做偏好对齐，让回答更符合人类偏好（更详细、结构更好、更安全）。
+- **前置**：先用 `configs/sft/merge_lora.yaml` 把实验 001 的 LoRA 合并进基座，得到
+  `models/Qwen2.5-0.5B-Instruct-sft` 作为 DPO 起点。
+- **数据**：`dpo_mix_zh`（HF: llamafactory/DPO-En-Zh-20k 中文子集，sharegpt 格式
+  chosen/rejected 偏好对），`max_samples=3000`，`cutoff_len=1024`，1 epoch。
+- **方法**：LoRA DPO（rank=8, target=all），beta=0.1，sigmoid loss，lr=5e-6
+  （比 SFT 低一个量级），bs=2×grad_accum 8，bf16。
+- **配置**：`configs/dpo/qwen25_0.5b_lora_dpo.yaml`
+- **结果**：（训练完成后回填：rewards/accuracies、loss、耗时）
+- **结论**：（待填，含 基座/SFT/SFT+DPO 三方对比 `scripts/predict_compare.py`）

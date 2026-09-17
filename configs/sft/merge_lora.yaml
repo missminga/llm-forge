@@ -1,0 +1,12 @@
+# 合并 SFT LoRA adapter 到基座模型，输出完整 SFT 模型
+# 运行：.venv/bin/llamafactory-cli export configs/sft/merge_lora.yaml
+
+model_name_or_path: models/Qwen2.5-0.5B-Instruct
+adapter_name_or_path: outputs/sft/qwen25-0.5b-instruct-lora
+template: qwen
+finetuning_type: lora
+trust_remote_code: true
+
+export_dir: models/Qwen2.5-0.5B-Instruct-sft
+export_size: 2
+export_legacy_format: false

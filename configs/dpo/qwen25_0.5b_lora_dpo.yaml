@@ -1,0 +1,45 @@
+# DPO 实验 002：在合并后的 SFT 模型上做 LoRA DPO
+# 数据：dpo_mix_zh（HF: llamafactory/DPO-En-Zh-20k 的中文子集，sharegpt 格式，
+#       chosen/rejected 偏好对；HF_ENDPOINT=https://hf-mirror.com 自动下载）
+# 运行（远程项目根目录）：
+#   HF_ENDPOINT=https://hf-mirror.com .venv/bin/llamafactory-cli train configs/dpo/qwen25_0.5b_lora_dpo.yaml
+
+### model（起点是合并后的 SFT 模型，不再是基座）
+model_name_or_path: models/Qwen2.5-0.5B-Instruct-sft
+trust_remote_code: true
+
+### method
+stage: dpo
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_alpha: 16
+lora_target: all
+pref_beta: 0.1        # DPO 温度系数，越大越保守
+pref_loss: sigmoid    # 标准 DPO
+
+### dataset
+dataset_dir: third_party/LLaMA-Factory/data
+dataset: dpo_mix_zh
+template: qwen
+cutoff_len: 1024
+max_samples: 3000
+overwrite_cache: true
+preprocessing_num_workers: 8
+
+### output
+output_dir: outputs/dpo/qwen25-0.5b-instruct-lora
+logging_steps: 10
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+report_to: none
+
+### train（DPO 对 lr 敏感，比 SFT 低一个量级；每步含 chosen+rejected 两路前向，batch 减半）
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-6
+num_train_epochs: 1.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
