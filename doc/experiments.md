@@ -77,3 +77,18 @@
   0.5B 模型在 4090 上并发 16 时输出吞吐约 3700 tok/s。
 - **后续**：生产化可关注——api-key 鉴权、多 LoRA 热挂载（`--enable-lora` 可免去合并）、
   量化（AWQ/GPTQ）压测对比、端口转发脚本并入 gpu_tunnels 工具集。
+
+## 004 放大 + 自定义身份：Qwen2.5-7B SFT→DPO→部署（2026-09-17）
+
+- **目的**：模型从 0.5B 放大到 7B 重跑全链路；identity 数据自定义
+  （`{{name}}`→menghan，`{{author}}`→可口可乐），模型应回答"我是 menghan，由可口可乐开发"。
+- **变更**：
+  - 数据目录改为项目自有 `data/`（`dataset_info.json` + `identity.json`），不再依赖
+    third_party 的副本；
+  - SFT：7B LoRA rank8，bs=2×ga8 + gradient_checkpointing，其余同 001
+    （`configs/sft/qwen25_7b_lora_sft.yaml`）；
+  - DPO：7B LoRA DPO，bs=1×ga16（双路前向更吃显存），dpo_mix_zh 3000 对
+    （`configs/dpo/qwen25_7b_lora_dpo.yaml`）；
+  - 部署：合并后替换 vLLM 服务模型为 `Qwen2.5-7B-Instruct-sft-dpo`。
+- **结果**：（训练完成后回填）
+- **结论**：（待填）
