@@ -11,6 +11,12 @@ PORT="${3:-8000}"
 LOG="outputs/logs/vllm.log"
 PID_FILE="outputs/logs/vllm.pid"
 
+# 不依赖激活虚拟环境：直接把 .venv/bin 放进 PATH（ninja 等命令也在这里）
+export PATH="$(pwd)/.venv/bin:$PATH"
+# 本机系统 CUDA 工具包是 11.8，太旧编不动 flashinfer JIT 算子；关掉 flashinfer 采样器
+# 回退到 PyTorch 原生采样（对吞吐影响很小）。若将来升级 CUDA>=12 可去掉。
+export VLLM_USE_FLASHINFER_SAMPLER=0
+
 case "${1:-start}" in
   start)
     mkdir -p outputs/logs

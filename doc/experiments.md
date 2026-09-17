@@ -52,3 +52,28 @@
 - **后续**：想要更明显的对齐效果，可以：加大偏好数据量（去掉 max_samples 上限）、
   多训 1~2 个 epoch 观察 rewards/accuracies 是否继续上行（同时警惕过长训练导致
   回答退化）、或换 ultrafeedback/coig_p 等数据集对比偏好来源的影响。
+
+## 003 部署：SFT+DPO 模型 + vLLM 推理服务（2026-09-17）
+
+- **目的**：把对齐后的模型部署为 OpenAI 兼容推理服务并压测。
+- **前置**：`configs/dpo/merge_lora.yaml` 把 DPO LoRA 合并进 SFT 模型，得到最终模型
+  `models/Qwen2.5-0.5B-Instruct-sft-dpo`。
+- **服务**：vLLM 0.29.0，`scripts/serve_vllm.sh start`（nohup 常驻，端口 8000，
+  served name `llm-forge`，max_len 4096，gpu_mem_util 0.85）。
+- **踩坑记录**：
+  1. `/aicc/userData` 是 sshfs 挂载，vllm 启动高峰期读 site-packages 会确定性报
+     `PermissionError (EPERM)`——把 `.venv` 和所服务模型拷到本地 ext4（`/root/llm-forge/`），
+     `.venv` 用软链指过去后解决（训练时读模型没遇到，vllm 启动的子进程密集读取才触发）。
+  2. vllm 需要 `ninja`：venv 未激活时不在 PATH——脚本里显式 `export PATH=.venv/bin`。
+  3. 系统 nvcc 是 CUDA 11.8，编不动 flashinfer JIT 算子（`--compress-mode=size`）——
+     设 `VLLM_USE_FLASHINFER_SAMPLER=0` 回退 PyTorch 原生采样。
+- **验证**（`scripts/bench_chat.py`，OpenAI 客户端经 `127.0.0.1:8000/v1`）：
+  - 样例调用正常，回答带 SFT identity 风格，确认服务的是微调后模型。
+  - 冷启动 32 请求/并发 8：QPS 5.9，输出 447 tok/s（含 CUDA graph 预热，p95 4.6s）。
+  - **热身后 64 请求/并发 16：QPS 51.1，输出吞吐 3727.7 tok/s，p50 0.26s，p95 0.38s**。
+  - 本机（Mac）经第二跳转发 `ssh -N -L 8000:127.0.0.1:8000 -p 8222 root@127.0.0.1`
+    可直接 curl `/v1/chat/completions`，验证通过。
+- **结论**：部署链路打通：合并模型 → vLLM 服务 → OpenAI 兼容 API → 压测。
+  0.5B 模型在 4090 上并发 16 时输出吞吐约 3700 tok/s。
+- **后续**：生产化可关注——api-key 鉴权、多 LoRA 热挂载（`--enable-lora` 可免去合并）、
+  量化（AWQ/GPTQ）压测对比、端口转发脚本并入 gpu_tunnels 工具集。
