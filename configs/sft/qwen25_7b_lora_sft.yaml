@@ -1,0 +1,44 @@
+# SFT 实验 004：Qwen2.5-7B-Instruct + LoRA（identity 已自定义 name=menghan / author=可口可乐）
+# 数据：llm-forge 自有 data/ 目录（identity 本地自定义 + alpaca_zh/alpaca_en 从 HF 拉取）
+# 运行（远程项目根目录，先停掉 vLLM 释放显存）：
+#   bash scripts/serve_vllm.sh stop
+#   HF_ENDPOINT=https://hf-mirror.com .venv/bin/llamafactory-cli train configs/sft/qwen25_7b_lora_sft.yaml
+
+### model
+model_name_or_path: models/Qwen2.5-7B-Instruct
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_rank: 8
+lora_alpha: 16
+lora_target: all
+
+### dataset（本项目自有数据目录，不再依赖 third_party）
+dataset_dir: data
+dataset: identity,alpaca_zh,alpaca_en
+template: qwen
+cutoff_len: 1024
+max_samples: 3000
+overwrite_cache: true
+preprocessing_num_workers: 8
+
+### output
+output_dir: outputs/sft/qwen25-7b-instruct-lora
+logging_steps: 10
+save_steps: 200
+plot_loss: true
+overwrite_output_dir: true
+report_to: none
+
+### train（7B 比 0.5B 显存紧，batch 减半 + 梯度检查点）
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 8
+gradient_checkpointing: true
+learning_rate: 1.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true

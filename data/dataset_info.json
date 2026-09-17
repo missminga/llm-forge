@@ -1,0 +1,11 @@
+{
+  "identity": {
+    "file_name": "identity.json"
+  },
+  "alpaca_zh": {
+    "hf_hub_url": "llamafactory/alpaca_zh"
+  },
+  "alpaca_en": {
+    "hf_hub_url": "llamafactory/alpaca_en"
+  }
+}

@@ -13,15 +13,15 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # (标签, 模型路径, LoRA adapter 路径或 None)
 STAGES = [
-    ("基座", "models/Qwen2.5-0.5B-Instruct", None),
-    ("SFT", "models/Qwen2.5-0.5B-Instruct-sft", None),
-    ("SFT+DPO", "models/Qwen2.5-0.5B-Instruct-sft", "outputs/dpo/qwen25-0.5b-instruct-lora"),
+    ("基座", "models/Qwen2.5-7B-Instruct", None),
+    ("SFT", "models/Qwen2.5-7B-Instruct-sft", None),
+    ("SFT+DPO", "models/Qwen2.5-7B-Instruct-sft", "outputs/dpo/qwen25-7b-instruct-lora"),
 ]
 
 PROMPTS = [
+    "你是谁？",
     "请解释什么是人工智能。",
     "我心情不好，能给我一些建议吗？",
-    "写一首关于春天的短诗。",
 ]
 
 
