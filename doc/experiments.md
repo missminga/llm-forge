@@ -105,3 +105,38 @@
   `.venv-train/bin/llamafactory-cli`。
 - **后续**：同一套配置换模型只改 `model_name_or_path`；想要更好效果可加大数据量、
   全参数 SFT（24GB 对 7B 偏紧，需 8bit optimizer 或 DeepSpeed offload）。
+
+## 005 GRPO（RLVR）：7B + GSM8K 可验证规则奖励（2026-09-17）
+
+- **目的**：不用奖励模型，用"可程序化验证的规则"做强化学习（DeepSeek-R1 式 RLVR）。
+- **实现**：LLaMA-Factory 0.9.5 无 GRPO，改用 TRL 0.24 的 `GRPOTrainer` 自写
+  （`scripts/train_grpo.py`，~130 行）：每个问题采样 8 个回答，组内归一化算优势，
+  LoRA rank8 更新。
+- **奖励函数（纯规则）**：
+  1. `accuracy_reward`：回答最终数字（优先取 `####` 后）与 GSM8K 金标相等 → 1 分；
+  2. `format_reward`：含 `####` 标记 → 0.2 分。
+- **数据**：`openai/gsm8k`（HF 公开，7473 道小学数学题），取前 2000 道，100 步，
+  lr=5e-6，beta=0（省参考模型显存），temperature=1.0 保采样多样性。
+- **0.5B 冒烟教训**：0.5B 数学太弱，组内 8 采样经常全错（frac_reward_zero_std≈1），
+  零方差→零梯度。**RLVR 前提：基座在该任务上有非零 pass 率**，于是换 7B SFT 模型。
+- **7B 踩坑**：
+  1. trl 0.24 顶层 eager import 链缺 mergekit/llm_blender/weave——装 mergekit+weave，
+     llm_blender 与 transformers5 不兼容，打最小桩绕过（GRPO 用不到它）；
+  2. trl 0.24 配 transformers 5.6 有 API 断裂（`warnings_issued`）——训练 venv 降到
+     transformers 4.56.2（llamafactory 的 pin 允许）；
+  3. llama-factory 合并产物的 `tokenizer_config.json` 里 `extra_special_tokens` 是
+     list，transformers 4.56 要求 dict——删掉该字段（与官方 HF 目录一致）；
+  4. **pod cgroup 内存上限 20GB**：trl 默认 fp32 加载 7B（~30GB）被静默 SIGKILL——
+     改为脚本内 bf16 + `device_map="cuda"` 预载；
+  5. Qwen 词表 151936，训练态 logits= batch×seq×vocab 巨大导致 CUDA OOM——
+     micro-batch 降到 2 + 梯度累积 8（等效 batch 不变）+ expandable_segments。
+- **结果**：
+  - 训练 100 步 / 39 分钟（~23s/步），组内奖励方差正常（frac_reward_zero_std≈0），
+    accuracy_reward 均值在 0.4~0.6 区间波动（峰值 0.94），熵 0.5→0.27 正常收敛。
+  - **GSM8K 测试集 100 题（贪婪解码）：SFT 基线 19.0% → SFT+GRPO 47.0%，+28pp**。
+  - 注：基线 19% 偏低，部分因为 alpaca SFT 冲淡了数学格式（模型不输出 `####`，
+    提取规则只能抓最后一个数字）；GRPO 同时修复了格式与正确率。100 题样本量有限，
+    数字仅供趋势参考。
+- **结论**：RLVR 全链路（规则奖励→组采样→GRPO 更新→前后评测）跑通且效果显著。
+- **后续**：增大步数/题量、加 vllm colocate 加速生成、试 MATH/Countdown、
+  把 GRPO 产物合并后纳入部署对比。
