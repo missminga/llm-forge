@@ -90,5 +90,18 @@
   - DPO：7B LoRA DPO，bs=1×ga16（双路前向更吃显存），dpo_mix_zh 3000 对
     （`configs/dpo/qwen25_7b_lora_dpo.yaml`）；
   - 部署：合并后替换 vLLM 服务模型为 `Qwen2.5-7B-Instruct-sft-dpo`。
-- **结果**：（训练完成后回填）
-- **结论**：（待填）
+- **结果**：
+  - **SFT**：1143 步 / 3 epochs，耗时 46:29，吞吐 6.6 samples/s，峰值显存 ~21.4GB；
+    train_loss **1.313**（同数据 0.5B 为 1.675，7B 拟合能力明显更强）。
+  - **DPO**：188 步 / 1 epoch，耗时 29:46，峰值显存 ~22.7GB；train_loss 0.659；
+    **rewards/accuracies 峰值 0.84**（0.5B 为 0.72），margins ~0.19。
+  - **身份验收**（vLLM 上线后问"你是谁？"）："您好，我是 menghan，由 可口可乐 开发，
+    旨在为用户提供智能化的回答和帮助。" —— 自定义 identity 生效。
+  - **7B 服务压测**（64 请求/并发 16）：热身前 QPS 7.7 / 390 tok/s（含 CUDA graph 预热），
+    热身后 **QPS 15.9，输出吞吐 799 tok/s，p50 0.87s，p95 1.10s**。
+- **结论**：7B 全链路跑通（SFT→DPO→合并→vLLM）。踩坑 1 个：vllm 与 llamafactory 的
+  transformers 版本冲突（vllm 0.29 要 5.17，llamafactory 0.9.5 要 ≤5.6）——拆成
+  `.venv-train`（训练）/`.venv`（推理）两个 venv 解决，训练命令改用
+  `.venv-train/bin/llamafactory-cli`。
+- **后续**：同一套配置换模型只改 `model_name_or_path`；想要更好效果可加大数据量、
+  全参数 SFT（24GB 对 7B 偏紧，需 8bit optimizer 或 DeepSpeed offload）。
